@@ -11,6 +11,7 @@
 					<span class="button"><img src="./assets/settings.png" alt=""></span>
 				</div>
 			</div>
+			{{tableLeftList}}
 			<VuePerfectScrollbar class="scroll-area" ref="scrollArea" v-once :settings="settings" @ps-scroll-y="scrollHanle">
 			<div class="double-table-container">
 				<div class="order-table">
@@ -29,11 +30,11 @@
 						</div>
 					</div>
 					<div class="order-table__body">
-						<div class="order-table__row" v-for="item in tableLeftList">
+						<div class="order-table__row" v-for="(item, i) in tableLeftList">
 							<div class="order-table__chart-line left-chart"
 							:style="{width: `${calcChartWidth(item)}px`}"></div>
 							<div class="order-table__count">
-								1
+								{{i}}
 							</div>
 							<div class="order-table__total">
 								{{item.total}}
@@ -63,12 +64,12 @@
 						</div>
 					</div>
 					<div class="order-table__body">
-						<div class="order-table__row" v-for="item in tableRightList">
+						<div class="order-table__row" v-for="(item, i) in tableRightList">
 							<div
 								class="order-table__chart-line right-chart" 
 								:style="{width: `${calcChartWidth(item)}px`}"></div>
 							<div class="order-table__count">
-								1
+								{{i}}
 							</div>
 							<div class="order-table__total">
 								{{item.total}}
@@ -101,9 +102,9 @@ export default {
 	data() {
 		return {
 			JSONdata,
-			dataTableLeft: [],
+			importedDataArray: [],
+			readyToRenderArray: [],
 			tableLeftList: [],
-			dataTableRight: [],
 			tableRightList: [],
 			settings: {
         maxScrollbarLength: 60
@@ -111,28 +112,24 @@ export default {
 		}
 	},
 	created() {
-		this.dataTableLeft = JSONdata.asks.slice(0,500)
-		this.dataTableRight = JSONdata.asks.slice(501,1000)
-
+		this.importedDataArray = JSONdata.asks.slice(0,1000)
 	},
 	beforeMount() {
-		this.getLeftTableData()
-		this.getRightTableData()
+		this.filterToRender()
 	},
 	methods: {
-		getLeftTableData() {
-			let cutArr = this.dataTableLeft.slice(0, 50)
+		filterToRender() {
 			let amount = []
 			let total = []
 
-			this.tableLeftList = cutArr.reduce((prevItem, currentItem, i, arr) => {
+			const filteredToRender = this.importedDataArray.reduce((prevItem, currentItem, i, arr) => {
 
 				if (i === 0) {
 					total = currentItem.quantity
-				} else
-				if (i > 0) {
+				} else {
 					total = total + currentItem.quantity
 				}
+
 				amount.push({
 					count: 1,
 					total: total.toFixed(6),
@@ -140,32 +137,14 @@ export default {
 					price: currentItem.price
 				})
 				return amount
-			}, [])
-			return this.tableLeftList
+			}, []);
+
+			this.readyToRenderArray = filteredToRender
+			this.tableLeftList = this.readyToRenderArray.slice(0, 20)
+			this.tableRightList = this.readyToRenderArray.slice(21, 41)
 		},
-		getRightTableData() {
-
-			let cutArr = this.dataTableRight.slice(0, 50)
-			let amount = []
-			let total = []
-
-			this.tableRightList = cutArr.reduce((prevItem, currentItem, i, arr) => {
-
-				if (i === 0) {
-					total = currentItem.quantity
-				} else
-				if (i > 0) {
-					total = total + currentItem.quantity
-				}
-				amount.push({
-					count: 1,
-					total: total.toFixed(6),
-					amount: currentItem.quantity.toFixed(6),
-					price: currentItem.price
-				})
-				return amount
-			}, [])
-			return this.tableRightList
+		renderTables(quantity) {
+			this.tableLeftList.push({price: 9999999999999})
 		},
 		calcChartWidth(item) {
 			// item.total === 10000 === 100% === 500 px
@@ -176,9 +155,13 @@ export default {
       let tableScrollPosition = document.querySelector('.scroll-area').scrollTop
       let tableContentHeight = document.querySelector('.scroll-area').scrollHeight
       let tableHeight = document.querySelector('.scroll-area').clientHeight
-      const downloadPosition = 300
 
-      console.log(tableScrollPosition === (tableContentHeight - tableHeight))
+      if (tableScrollPosition === (tableContentHeight - tableHeight)) {
+      	// подгрузить 5 объектов
+      	this.renderTables(this.tableLeftList.length + 5)
+      	
+      	alert('Должны подгрузится данные т.к. state массива, из которого рендерится - обновился')
+      }
     },
 	},
 	components: {
