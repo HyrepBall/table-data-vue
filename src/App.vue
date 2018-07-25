@@ -11,11 +11,9 @@
 					<span class="button"><img src="./assets/settings.png" alt=""></span>
 				</div>
 			</div>
-			{{tableLeftList}}
-			<VuePerfectScrollbar class="scroll-area" ref="scrollArea" v-once :settings="settings" @ps-scroll-y="scrollHanle">
-			<div class="double-table-container">
+			<div class="double-table-container" @scroll.passive="scrollHanle">
 				<div class="order-table">
-					<div class="order-table__header">
+					<div class="order-table__header" :style="{width: `${returnHeaderWidth()}px`}">
 						<div class="order-table__count">
 							Count
 						</div>
@@ -49,7 +47,7 @@
 					</div>
 				</div>
 				<div class="order-table revert">
-					<div class="order-table__header">
+					<div class="order-table__header" :style="{width: `${returnHeaderWidth()}px`}">
 						<div class="order-table__count">
 							Count
 						</div>
@@ -84,14 +82,12 @@
 					</div>
 				</div>
 			</div>
-			</VuePerfectScrollbar>
 		</div>
 	</div>
 </template>
 
 <script>
 import HelloWorld from "./components/HelloWorld.vue";
-import VuePerfectScrollbar from 'vue-perfect-scrollbar'
 
 import JSONdata from './utils/1.json';
 
@@ -141,10 +137,11 @@ export default {
 
 			this.readyToRenderArray = filteredToRender
 			this.tableLeftList = this.readyToRenderArray.slice(0, 20)
-			this.tableRightList = this.readyToRenderArray.slice(21, 41)
+			this.tableRightList = this.readyToRenderArray.slice(this.tableLeftList.length +1, this.tableLeftList.length +21)
 		},
 		renderTables(quantity) {
-			this.tableLeftList.push({price: 9999999999999})
+			this.tableLeftList = this.readyToRenderArray.slice(0, quantity)
+			this.tableRightList = this.readyToRenderArray.slice(quantity +1, quantity + quantity +1)
 		},
 		calcChartWidth(item) {
 			// item.total === 10000 === 100% === 500 px
@@ -152,21 +149,23 @@ export default {
 			return chartWidthValue.toFixed(1)
 		},
 		scrollHanle(evt) {
-      let tableScrollPosition = document.querySelector('.scroll-area').scrollTop
-      let tableContentHeight = document.querySelector('.scroll-area').scrollHeight
-      let tableHeight = document.querySelector('.scroll-area').clientHeight
+      let tableScrollPosition = document.querySelector('.double-table-container').scrollTop
+      let tableContentHeight = document.querySelector('.double-table-container').scrollHeight
+      let tableHeight = document.querySelector('.double-table-container').clientHeight
 
       if (tableScrollPosition === (tableContentHeight - tableHeight)) {
       	// подгрузить 5 объектов
       	this.renderTables(this.tableLeftList.length + 5)
       	
-      	alert('Должны подгрузится данные т.к. state массива, из которого рендерится - обновился')
+      	console.log('Должны подгрузится данные т.к. state массива, из которого рендерится - обновился')
       }
     },
+    returnHeaderWidth() {
+    	return document.querySelector('.order-table').clientWidth
+    }
 	},
 	components: {
 		HelloWorld,
-		VuePerfectScrollbar,
 	},
 };
 </script>
